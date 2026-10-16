@@ -1,0 +1,594 @@
+/* ==================================================
+   CONFIGURAÇÕES GERAIS
+   ================================================== */
+
+:root {
+  --cor-principal: #1d4ed8;
+  --cor-principal-hover: #1e40af;
+  --cor-secundaria: #475569;
+  --cor-fundo: #f1f5f9;
+  --cor-cartao: #ffffff;
+  --cor-texto: #1e293b;
+  --cor-texto-secundario: #64748b;
+  --cor-borda: #e2e8f0;
+  --cor-sucesso: #15803d;
+  --cor-perigo: #dc2626;
+  --cor-perigo-hover: #b91c1c;
+  --cor-alerta: #b45309;
+  --sombra: 0 4px 16px rgba(15, 23, 42, 0.06);
+  --raio: 12px;
+}
+
+/* Remove margens e ajusta o tamanho dos elementos */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--cor-fundo);
+  color: var(--cor-texto);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* ==================================================
+   CABEÇALHO
+   ================================================== */
+
+header {
+  padding: 28px 20px;
+  background: linear-gradient(135deg, #1e3a8a, #2563eb);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(30, 58, 138, 0.2);
+}
+
+header h1 {
+  max-width: 1400px;
+  margin: 0 auto;
+  font-size: clamp(24px, 4vw, 34px);
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+/* ==================================================
+   ÁREA PRINCIPAL
+   ================================================== */
+
+main {
+  width: min(1400px, 100%);
+  margin: 0 auto;
+  padding: 28px 24px 50px;
+}
+
+/* Cada seção funciona como um cartão */
+main section {
+  min-width: 0;
+  margin-bottom: 28px;
+  padding: 24px;
+  overflow-x: auto;
+  background: var(--cor-cartao);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  box-shadow: var(--sombra);
+}
+
+/* Títulos das seções */
+main section > h2 {
+  margin: 0 0 22px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--cor-borda);
+  color: #1e3a8a;
+  font-size: 22px;
+  line-height: 1.35;
+}
+
+main section > h3 {
+  margin: 24px 0 14px;
+  color: var(--cor-texto);
+  font-size: 17px;
+}
+
+/* Textos explicativos */
+main section > p {
+  color: var(--cor-texto-secundario);
+}
+
+/* ==================================================
+   PAINEL DE INDICADORES
+   ================================================== */
+
+/* Os três indicadores do painel aparecem como cartões */
+main > section:first-of-type {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+main > section:first-of-type h2 {
+  grid-column: 1 / -1;
+  margin-bottom: 0;
+}
+
+main > section:first-of-type p {
+  margin: 0;
+  padding: 20px;
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+  border-radius: 10px;
+  color: #1e40af;
+  font-size: 15px;
+}
+
+main > section:first-of-type strong {
+  display: block;
+  margin-top: 8px;
+  color: #1d4ed8;
+  font-size: 30px;
+  line-height: 1.2;
+}
+
+/* ==================================================
+   FORMULÁRIOS
+   ================================================== */
+
+form {
+  display: grid;
+  grid-template-columns: minmax(150px, 220px) minmax(0, 1fr);
+  align-items: center;
+  gap: 14px 18px;
+  margin-bottom: 28px;
+}
+
+/* Rótulos dos campos */
+form label {
+  color: #334155;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Campos de texto, listas e áreas de texto */
+input:not([type="hidden"]),
+select,
+textarea {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  background: #ffffff;
+  color: var(--cor-texto);
+  font: inherit;
+  font-size: 14px;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #94a3b8;
+}
+
+/* Destaque quando o usuário seleciona um campo */
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--cor-principal);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+/* Mantém títulos internos dos formulários em toda a largura */
+form h3 {
+  grid-column: 1 / -1;
+  margin: 14px 0 0;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--cor-borda);
+  color: #1e40af;
+  font-size: 17px;
+}
+
+/* Campos que precisam de mais espaço */
+form textarea {
+  align-self: stretch;
+}
+
+/* ==================================================
+   BOTÕES
+   ================================================== */
+
+button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 10px 16px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: var(--cor-principal);
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.3;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    transform 0.15s ease,
+    box-shadow 0.2s ease;
+}
+
+button:hover {
+  background: var(--cor-principal-hover);
+  box-shadow: 0 3px 8px rgba(29, 78, 216, 0.18);
+}
+
+button:active {
+  transform: translateY(1px);
+}
+
+button:focus-visible {
+  outline: 3px solid #93c5fd;
+  outline-offset: 2px;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Botões dos formulários */
+form button {
+  justify-self: start;
+}
+
+/* Botão de editar */
+button.botao-editar {
+  margin: 2px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+}
+
+button.botao-editar:hover {
+  background: #bfdbfe;
+}
+
+/* Botão de excluir */
+button.botao-excluir {
+  margin: 2px;
+  background: #fee2e2;
+  color: #b91c1c;
+  border-color: #fecaca;
+}
+
+button.botao-excluir:hover {
+  background: #fecaca;
+}
+
+/* Botão de cancelar */
+button#botaoCancelarCliente,
+button#botaoCancelarTecnico,
+button#botaoCancelarOS,
+button#botaoCancelarInspecao {
+  background: #e2e8f0;
+  color: #334155;
+  border-color: #cbd5e1;
+}
+
+button#botaoCancelarCliente:hover,
+button#botaoCancelarTecnico:hover,
+button#botaoCancelarOS:hover,
+button#botaoCancelarInspecao:hover {
+  background: #cbd5e1;
+}
+
+/* ==================================================
+   TABELAS
+   ================================================== */
+
+table {
+  width: 100%;
+  min-width: 650px;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: #ffffff;
+  font-size: 13px;
+}
+
+/* Cabeçalho da tabela */
+thead th {
+  padding: 14px 12px;
+  background: #eff6ff;
+  color: #1e3a8a;
+  border-top: 1px solid #dbeafe;
+  border-bottom: 2px solid #bfdbfe;
+  text-align: left;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Células */
+tbody td {
+  padding: 12px;
+  border-bottom: 1px solid var(--cor-borda);
+  color: #334155;
+  vertical-align: middle;
+}
+
+/* Linhas alternadas */
+tbody tr:nth-child(even) {
+  background: #f8fafc;
+}
+
+/* Destaque ao passar o mouse */
+tbody tr:hover {
+  background: #eff6ff;
+}
+
+/* Botões dentro das tabelas */
+tbody td button {
+  white-space: nowrap;
+}
+
+/* ==================================================
+   INSPEÇÃO FÍSICA
+   ================================================== */
+
+/* Mantém os campos do checklist organizados */
+#formInspecao {
+  gap: 12px 18px;
+}
+
+/* Texto explicativo da inspeção */
+#formInspecao + h3 {
+  margin-top: 28px;
+}
+
+/* ==================================================
+   ESTADOS E ACESSIBILIDADE
+   ================================================== */
+
+/* Elementos escondidos continuam escondidos */
+[hidden] {
+  display: none !important;
+}
+
+/* Seleção de texto */
+::selection {
+  background: #bfdbfe;
+  color: #1e3a8a;
+}
+
+/* ==================================================
+   RESPONSIVIDADE PARA TABLETS
+   ================================================== */
+
+@media (max-width: 900px) {
+  main {
+    padding: 20px 16px 36px;
+  }
+
+  main section {
+    padding: 20px;
+  }
+
+  form {
+    grid-template-columns: minmax(130px, 170px) minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  main > section:first-of-type {
+    gap: 12px;
+  }
+}
+
+/* ==================================================
+   RESPONSIVIDADE PARA CELULARES
+   ================================================== */
+
+@media (max-width: 600px) {
+  body {
+    font-size: 14px;
+  }
+
+  header {
+    padding: 22px 16px;
+  }
+
+  header h1 {
+    font-size: 23px;
+  }
+
+  main {
+    padding: 14px 10px 28px;
+  }
+
+  main section {
+    margin-bottom: 18px;
+    padding: 16px;
+    border-radius: 9px;
+  }
+
+  main section > h2 {
+    font-size: 19px;
+  }
+
+  /* Indicadores empilhados em telas pequenas */
+  main > section:first-of-type {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  main > section:first-of-type h2 {
+    grid-column: 1;
+  }
+
+  main > section:first-of-type p {
+    padding: 14px;
+  }
+
+  main > section:first-of-type strong {
+    font-size: 25px;
+  }
+
+  /* Formulários em uma coluna no celular */
+  form {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  form label {
+    margin-top: 8px;
+  }
+
+  form input:not([type="hidden"]),
+  form select,
+  form textarea {
+    width: 100%;
+  }
+
+  form button {
+    width: 100%;
+    justify-self: stretch;
+    margin-top: 4px;
+  }
+
+  form h3 {
+    margin-top: 18px;
+  }
+
+  /* As tabelas podem ser roladas horizontalmente */
+  table {
+    min-width: 650px;
+  }
+
+  tbody td,
+  thead th {
+    padding: 10px;
+  }
+}
+
+/* ==================================================
+   IMPRESSÃO DA PÁGINA PRINCIPAL
+   ================================================== */
+
+@media print {
+  body {
+    background: #ffffff;
+    color: #000000;
+  }
+
+  header {
+    background: #ffffff;
+    color: #000000;
+    box-shadow: none;
+  }
+
+  main {
+    width: 100%;
+    padding: 0;
+  }
+
+  main section {
+    box-shadow: none;
+    border: 1px solid #cccccc;
+    break-inside: avoid;
+  }
+
+  button {
+    display: none !important;
+  }
+}
+
+/* ==================================================
+   MENU DE NAVEGAÇÃO
+   ================================================== */
+
+.menu-navegacao {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  padding: 12px 20px;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.08);
+}
+
+.menu-navegacao a {
+  display: inline-block;
+  padding: 9px 14px;
+  border-radius: 7px;
+
+  color: #1e40af;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 700;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.menu-navegacao a:hover {
+  background: #dbeafe;
+  color: #1e3a8a;
+}
+
+.menu-navegacao a:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 3px;
+}
+
+/* Evita esconder os títulos ao navegar pelo menu */
+#painel,
+#clientes,
+#tecnicos,
+#ordens-servico,
+#inspecao-fisica {
+  scroll-margin-top: 90px;
+}
+
+/* Ajustes para celulares */
+@media (max-width: 600px) {
+  .menu-navegacao {
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding: 10px;
+  }
+
+  .menu-navegacao a {
+    flex-shrink: 0;
+    padding: 9px 12px;
+    font-size: 13px;
+  }
+}
+
+/* Esconde o menu ao imprimir */
+@media print {
+  .menu-navegacao {
+    display: none !important;
+  }
+}

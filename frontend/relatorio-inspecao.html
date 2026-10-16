@@ -1,0 +1,557 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Relatório de Inspeção Física</title>
+
+    <style>
+      /* Estilo geral da página */
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 24px;
+        background: #f1f5f9;
+        color: #1e293b;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 14px;
+      }
+
+      .relatorio {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 32px;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 12px #00000012;
+      }
+
+      .cabecalho {
+        text-align: center;
+        border-bottom: 2px solid #1e293b;
+        padding-bottom: 16px;
+        margin-bottom: 24px;
+      }
+
+      .cabecalho h1 {
+        margin: 0 0 8px;
+        font-size: 24px;
+      }
+
+      .cabecalho p {
+        margin: 0;
+        color: #475569;
+      }
+
+      h2 {
+        margin-top: 24px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #cbd5e1;
+        font-size: 17px;
+      }
+
+      .dados {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .campo {
+        padding: 10px;
+        border: 1px solid #cbd5e1;
+        border-radius: 4px;
+        overflow-wrap: anywhere;
+      }
+
+      .campo strong {
+        display: block;
+        margin-bottom: 5px;
+        color: #475569;
+        font-size: 12px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 12px;
+      }
+
+      th,
+      td {
+        border: 1px solid #cbd5e1;
+        padding: 9px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        background: #e2e8f0;
+      }
+
+      .observacoes {
+        min-height: 65px;
+        padding: 12px;
+        border: 1px solid #cbd5e1;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+
+      .assinaturas {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 40px;
+        margin-top: 65px;
+        text-align: center;
+      }
+
+      .assinatura {
+        padding-top: 8px;
+        border-top: 1px solid #334155;
+      }
+
+      .botoes {
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+        margin: 0 auto 20px;
+      }
+
+      button {
+        padding: 11px 18px;
+        border: none;
+        border-radius: 5px;
+        background: #2563eb;
+        color: white;
+        font-size: 14px;
+        cursor: pointer;
+      }
+
+      button.voltar {
+        background: #475569;
+      }
+
+      #mensagemErro {
+        max-width: 900px;
+        margin: 0 auto 16px;
+        padding: 12px;
+        color: #991b1b;
+        background: #fee2e2;
+        border-radius: 5px;
+      }
+
+      [hidden] {
+        display: none !important;
+      }
+
+      @media (max-width: 600px) {
+        body {
+          padding: 10px;
+        }
+
+        .relatorio {
+          padding: 16px;
+        }
+
+        .dados {
+          grid-template-columns: 1fr;
+        }
+
+        .assinaturas {
+          grid-template-columns: 1fr;
+          gap: 45px;
+        }
+
+        table {
+          font-size: 12px;
+        }
+
+        th,
+        td {
+          padding: 6px;
+        }
+      }
+
+      /* Ajustes para impressão ou salvamento em PDF */
+      @media print {
+        @page {
+          size: A4;
+          margin: 15mm;
+        }
+
+        body {
+          padding: 0;
+          background: white;
+          color: black;
+          font-size: 11px;
+        }
+
+        .relatorio {
+          max-width: none;
+          padding: 0;
+          border-radius: 0;
+          box-shadow: none;
+        }
+
+        .botoes,
+        #mensagemErro {
+          display: none !important;
+        }
+
+        .cabecalho,
+        h2 {
+          break-after: avoid;
+        }
+
+        table {
+          break-inside: auto;
+        }
+
+        tr,
+        .campo,
+        .assinaturas {
+          break-inside: avoid;
+        }
+
+        th {
+          background: #e2e8f0 !important;
+          print-color-adjust: exact;
+          -webkit-print-color-adjust: exact;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="botoes">
+      <button type="button" onclick="window.print()">
+        Imprimir / Salvar como PDF
+      </button>
+
+      <button type="button" class="voltar" onclick="window.close()">
+        Fechar relatório
+      </button>
+    </div>
+
+    <div id="mensagemErro" hidden></div>
+
+    <main class="relatorio">
+      <header class="cabecalho">
+        <h1>Relatório de Inspeção Física</h1>
+        <p>Sistema de Assistência Técnica</p>
+        <p id="numeroRelatorio">Carregando relatório...</p>
+      </header>
+
+      <section>
+        <h2>1. Dados da ordem de serviço</h2>
+        <div class="dados">
+          <div class="campo">
+            <strong>Número da OS</strong>
+            <span id="numeroOS">-</span>
+          </div>
+
+          <div class="campo">
+            <strong>Data de abertura</strong>
+            <span id="dataAbertura">-</span>
+          </div>
+
+          <div class="campo">
+            <strong>Status</strong>
+            <span id="statusOS">-</span>
+          </div>
+
+          <div class="campo">
+            <strong>Recebido por</strong>
+            <span id="recebidoPor">-</span>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>2. Dados do cliente</h2>
+        <div class="dados">
+          <div class="campo">
+            <strong>Nome</strong>
+            <span id="nomeCliente">-</span>
+          </div>
+
+          <div class="campo">
+            <strong>CPF/CNPJ</strong>
+            <span id="documentoCliente">-</span>
+          </div>
+
+          <div class="campo">
+            <strong>Telefone</strong>
+            <span id="telefoneCliente">-</span>
+          </div>
+
+          <div class="campo">
+            <strong>E-mail</strong>
+            <span id="emailCliente">-</span>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>3. Dados do equipamento</h2>
+        <div class="dados">
+          <div class="campo">
+            <strong>Equipamento</strong>
+            <span id="equipamento">-</span>
+          </div>
+
+          <div class="campo">
+            <strong>Marca</strong>
+            <span id="marca">-</span>
+          </div>
+
+          <div class="campo">
+            <strong>Modelo</strong>
+            <span id="modelo">-</span>
+          </div>
+
+          <div class="campo">
+            <strong>Número de série</strong>
+            <span id="numeroSerie">-</span>
+          </div>
+
+          <div class="campo">
+            <strong>Acessórios recebidos</strong>
+            <span id="acessorios">-</span>
+          </div>
+
+          <div class="campo">
+            <strong>Defeito informado</strong>
+            <span id="defeito">-</span>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>4. Dados da inspeção</h2>
+        <div class="dados">
+          <div class="campo">
+            <strong>Data da inspeção</strong>
+            <span id="dataInspecao">-</span>
+          </div>
+
+          <div class="campo">
+            <strong>Técnico responsável</strong>
+            <span id="nomeTecnico">-</span>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>5. Checklist de inspeção física</h2>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 55px">Item</th>
+              <th>Componente verificado</th>
+              <th>Condição registrada</th>
+            </tr>
+          </thead>
+          <tbody id="listaChecklist"></tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2>6. Observações adicionais</h2>
+        <div id="observacoes" class="observacoes">
+          Nenhuma observação registrada.
+        </div>
+      </section>
+
+      <section class="assinaturas">
+        <div class="assinatura">Assinatura do técnico responsável</div>
+
+        <div class="assinatura">Assinatura do cliente</div>
+      </section>
+    </main>
+
+    <script>
+      // Obtém o ID da inspeção informado na URL
+      const parametros = new URLSearchParams(window.location.search);
+      const idInspecao = parametros.get("id");
+
+      // Nomes dos 16 itens da inspeção
+      const itensChecklist = [
+        "Gabinete / estrutura",
+        "Tampas laterais",
+        "Parafusos do gabinete",
+        "Pés e apoios",
+        "Botões Power / Reset",
+        "Painel frontal",
+        "Portas USB / áudio frontais",
+        "Portas traseiras",
+        "Cabo de força",
+        "Fonte ATX / chave seletora",
+        "Monitor e base",
+        "Cabos de vídeo",
+        "Teclado",
+        "Mouse",
+        "Unidade óptica / leitor",
+        "Etiqueta / número de série",
+      ];
+
+      // Consulta a API e verifica se a resposta foi bem-sucedida
+      async function consultarAPI(url) {
+        const resposta = await fetch(url);
+
+        let dados;
+
+        try {
+          dados = await resposta.json();
+        } catch {
+          dados = {};
+        }
+
+        if (!resposta.ok) {
+          throw new Error(
+            dados.erro || "Não foi possível carregar os dados do relatório.",
+          );
+        }
+
+        return dados;
+      }
+
+      // Consulta dados relacionados sem impedir o relatório caso sejam opcionais
+      async function consultarOpcional(url) {
+        if (!url) return null;
+
+        try {
+          return await consultarAPI(url);
+        } catch {
+          return null;
+        }
+      }
+
+      // Preenche um campo de texto com segurança
+      function preencher(id, valor) {
+        document.getElementById(id).textContent =
+          valor === null || valor === undefined || valor === "" ? "-" : valor;
+      }
+
+      // Converte AAAA-MM-DD para DD/MM/AAAA
+      function formatarData(data) {
+        if (!data) return "-";
+
+        const partes = String(data).slice(0, 10).split("-");
+
+        if (partes.length !== 3) return data;
+
+        return `${partes[2]}/${partes[1]}/${partes[0]}`;
+      }
+
+      // Mostra uma mensagem caso não seja possível gerar o relatório
+      function mostrarErro(mensagem) {
+        const elemento = document.getElementById("mensagemErro");
+        elemento.textContent = mensagem;
+        elemento.hidden = false;
+      }
+
+      // Cria as linhas do checklist
+      function montarChecklist(inspecao) {
+        const tabela = document.getElementById("listaChecklist");
+        tabela.replaceChildren();
+
+        itensChecklist.forEach((nome, indice) => {
+          const linha = document.createElement("tr");
+          const numero = document.createElement("td");
+          const componente = document.createElement("td");
+          const condicao = document.createElement("td");
+
+          const campo = `item_${String(indice + 1).padStart(2, "0")}`;
+
+          numero.textContent = String(indice + 1);
+          componente.textContent = nome;
+          condicao.textContent = inspecao[campo] || "Não informado";
+
+          linha.append(numero, componente, condicao);
+          tabela.appendChild(linha);
+        });
+      }
+
+      // Carrega os dados da inspeção, da OS, do cliente e do técnico
+      async function carregarRelatorio() {
+        if (!idInspecao) {
+          mostrarErro("O ID da inspeção não foi informado na URL.");
+          document.getElementById("numeroRelatorio").textContent =
+            "Relatório indisponível";
+          return;
+        }
+
+        try {
+          const inspecao = await consultarAPI(
+            `/api/inspecoes/${encodeURIComponent(idInspecao)}`,
+          );
+
+          const ordem = await consultarOpcional(
+            inspecao.ordem_servico_id
+              ? `/api/ordens-servico/${encodeURIComponent(inspecao.ordem_servico_id)}`
+              : null,
+          );
+
+          const cliente = await consultarOpcional(
+            ordem && ordem.cliente_id
+              ? `/api/clientes/${encodeURIComponent(ordem.cliente_id)}`
+              : null,
+          );
+
+          const idTecnico = inspecao.tecnico_id || (ordem && ordem.tecnico_id);
+
+          const tecnico = await consultarOpcional(
+            idTecnico ? `/api/tecnicos/${encodeURIComponent(idTecnico)}` : null,
+          );
+
+          // Número da ordem e informações gerais
+          preencher("numeroRelatorio", `Inspeção nº ${inspecao.id}`);
+
+          preencher(
+            "numeroOS",
+            ordem?.numero_os || inspecao.numero_os || inspecao.ordem_servico_id,
+          );
+
+          preencher("dataAbertura", formatarData(ordem?.data_abertura));
+          preencher("statusOS", ordem?.status);
+          preencher("recebidoPor", ordem?.recebido_por);
+
+          // Informações do cliente
+          preencher("nomeCliente", cliente?.nome || ordem?.nome_cliente);
+          preencher("documentoCliente", cliente?.documento);
+          preencher("telefoneCliente", cliente?.telefone);
+          preencher("emailCliente", cliente?.email);
+
+          // Informações do equipamento
+          preencher("equipamento", ordem?.equipamento || inspecao.equipamento);
+          preencher("marca", ordem?.marca);
+          preencher("modelo", ordem?.modelo);
+          preencher("numeroSerie", ordem?.numero_serie);
+          preencher("acessorios", ordem?.acessorios_recebidos);
+          preencher("defeito", ordem?.defeito_informado);
+
+          // Informações da inspeção
+          preencher("dataInspecao", formatarData(inspecao.data_inspecao));
+          preencher("nomeTecnico", tecnico?.nome || inspecao.nome_tecnico);
+
+          // Checklist e observações
+          montarChecklist(inspecao);
+
+          const observacoes = document.getElementById("observacoes");
+          observacoes.textContent =
+            inspecao.observacoes || "Nenhuma observação registrada.";
+        } catch (erro) {
+          mostrarErro("Erro ao gerar o relatório: " + erro.message);
+          document.getElementById("numeroRelatorio").textContent =
+            "Relatório indisponível";
+        }
+      }
+
+      carregarRelatorio();
+    </script>
+  </body>
+</html>

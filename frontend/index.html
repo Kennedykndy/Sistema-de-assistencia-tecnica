@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sistema de Assistência Técnica</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Sistema de Assistência Técnica</h1>
+    </header>
+
+    <!-- Menu de navegação principal -->
+    <nav class="menu-navegacao" aria-label="Menu principal">
+      <a href="#painel">Painel</a>
+      <a href="#clientes">Clientes</a>
+      <a href="#tecnicos">Técnicos</a>
+      <a href="#ordens-servico">Ordens de Serviço</a>
+      <a href="#inspecao-fisica">Inspeção Física</a>
+    </nav>
+
+    <main>
+      <!-- Painel com os totais do sistema -->
+      <section id="painel">
+        <h2>Painel</h2>
+        <p>Total de clientes: <strong id="totalClientes">0</strong></p>
+        <p>Total de técnicos: <strong id="totalTecnicos">0</strong></p>
+        <p>Total de ordens de serviço: <strong id="totalOrdens">0</strong></p>
+      </section>
+
+      <!-- Cadastro de clientes -->
+      <section id="clientes">
+        <h2>Cadastro de Clientes</h2>
+        <form id="formCliente">
+          <input type="hidden" id="clienteId" />
+
+          <label for="nomeCliente">Nome:</label>
+          <input id="nomeCliente" required />
+
+          <label for="documentoCliente">CPF/CNPJ:</label>
+          <input id="documentoCliente" />
+
+          <label for="telefoneCliente">Telefone:</label>
+          <input id="telefoneCliente" />
+
+          <label for="emailCliente">E-mail:</label>
+          <input id="emailCliente" type="email" />
+
+          <label for="enderecoCliente">Endereço:</label>
+          <input id="enderecoCliente" />
+
+          <button type="submit" id="botaoSalvarCliente">Salvar cliente</button>
+          <button type="button" id="botaoCancelarCliente" hidden>
+            Cancelar edição
+          </button>
+        </form>
+
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nome</th>
+              <th>Documento</th>
+              <th>Telefone</th>
+              <th>E-mail</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="listaClientes"></tbody>
+        </table>
+      </section>
+
+      <!-- Cadastro de técnicos -->
+      <section id="tecnicos">
+        <h2>Cadastro de Técnicos</h2>
+        <form id="formTecnico">
+          <input type="hidden" id="tecnicoId" />
+
+          <label for="nomeTecnico">Nome:</label>
+          <input id="nomeTecnico" required />
+
+          <label for="telefoneTecnico">Telefone:</label>
+          <input id="telefoneTecnico" />
+
+          <label for="emailTecnico">E-mail:</label>
+          <input id="emailTecnico" type="email" />
+
+          <label for="identificacaoTecnico">Identificação:</label>
+          <input id="identificacaoTecnico" />
+
+          <button type="submit" id="botaoSalvarTecnico">Salvar técnico</button>
+          <button type="button" id="botaoCancelarTecnico" hidden>
+            Cancelar edição
+          </button>
+        </form>
+
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nome</th>
+              <th>Telefone</th>
+              <th>E-mail</th>
+              <th>Identificação</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="listaTecnicos"></tbody>
+        </table>
+      </section>
+
+      <!-- Cadastro de ordens de serviço -->
+      <section id="ordens-servico">
+        <h2>Ordens de Serviço</h2>
+        <form id="formOS">
+          <input type="hidden" id="osId" />
+
+          <label for="clienteOS">Cliente:</label>
+          <select id="clienteOS" required></select>
+
+          <label for="tecnicoOS">Técnico:</label>
+          <select id="tecnicoOS"></select>
+
+          <label for="dataAberturaOS">Data de abertura:</label>
+          <input type="date" id="dataAberturaOS" required />
+
+          <label for="equipamentoOS">Equipamento:</label>
+          <input id="equipamentoOS" required />
+
+          <label for="marcaOS">Marca:</label>
+          <input id="marcaOS" />
+
+          <label for="modeloOS">Modelo:</label>
+          <input id="modeloOS" />
+
+          <label for="serieOS">Número de série:</label>
+          <input id="serieOS" />
+
+          <label for="acessoriosOS">Acessórios:</label>
+          <input id="acessoriosOS" />
+
+          <label for="defeitoOS">Defeito informado:</label>
+          <textarea id="defeitoOS" required></textarea>
+
+          <label for="statusOS">Status:</label>
+          <select id="statusOS" required>
+            <option value="Aberta">Aberta</option>
+            <option value="Em andamento">Em andamento</option>
+            <option value="Aguardando aprovação">Aguardando aprovação</option>
+            <option value="Concluída">Concluída</option>
+            <option value="Entregue">Entregue</option>
+            <option value="Cancelada">Cancelada</option>
+          </select>
+
+          <label for="recebidoPorOS">Recebido por:</label>
+          <input id="recebidoPorOS" />
+
+          <button type="submit" id="botaoSalvarOS">
+            Salvar ordem de serviço
+          </button>
+          <button type="button" id="botaoCancelarOS" hidden>
+            Cancelar edição
+          </button>
+        </form>
+
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Número</th>
+              <th>Cliente</th>
+              <th>Técnico</th>
+              <th>Equipamento</th>
+              <th>Data</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="listaOS"></tbody>
+        </table>
+      </section>
+
+      <!-- Inspeção física do equipamento -->
+      <section id="inspecao-fisica">
+        <h2>Inspeção Física do Equipamento</h2>
+        <p>
+          Selecione a ordem de serviço e registre as condições do equipamento
+          recebido.
+        </p>
+
+        <form id="formInspecao">
+          <input type="hidden" id="inspecaoId" />
+
+          <label for="ordemInspecao">Ordem de serviço:</label>
+          <select id="ordemInspecao" required>
+            <option value="">Selecione uma ordem de serviço</option>
+          </select>
+
+          <label for="tecnicoInspecao">Técnico responsável:</label>
+          <select id="tecnicoInspecao">
+            <option value="">Selecione um técnico</option>
+          </select>
+
+          <label for="dataInspecao">Data da inspeção:</label>
+          <input type="date" id="dataInspecao" required />
+
+          <h3>Checklist de inspeção</h3>
+
+          <label for="item01">1. Gabinete / estrutura:</label>
+          <select id="item01" required>
+            <option value="">Selecione</option>
+            <option>OK</option>
+            <option>Riscado</option>
+            <option>Amassado</option>
+            <option>Quebrado</option>
+          </select>
+
+          <label for="item02">2. Tampas laterais:</label>
+          <select id="item02" required>
+            <option value="">Selecione</option>
+            <option>OK</option>
+            <option>Danificadas</option>
+            <option>Ausentes</option>
+          </select>
+
+          <label for="item03">3. Parafusos do gabinete:</label>
+          <select id="item03" required>
+            <option value="">Selecione</option>
+            <option>OK</option>
+            <option>Faltam</option>
+            <option>Não possui</option>
+          </select>
+
+          <label for="item04">4. Pés e apoios:</label>
+          <select id="item04" required>
+            <option value="">Selecione</option>
+            <option>OK</option>
+            <option>Danificados</option>
+            <option>Faltam</option>
+          </select>
+
+          <label for="item05">5. Botões Power / Reset:</label>
+          <select id="item05" required>
+            <option value="">Selecione</option>
+            <option>OK</option>
+            <option>Danificados</option>
+            <option>Travados</option>
+          </select>
+
+          <label for="item06">6. Painel frontal:</label>
+          <select id="item06" required>
+            <option value="">Selecione</option>
+            <option>OK</option>
+            <option>Danificado</option>
+            <option>Cabos soltos</option>
+          </select>
+
+          <label for="item07">7. Portas USB / áudio frontais:</label>
+          <select id="item07" required>
+            <option value="">Selecione</option>
+            <option>OK</option>
+            <option>Danificadas</option>
+            <option>Não possui</option>
+          </select>
+
+          <label for="item08">8. Portas traseiras:</label>
+          <select id="item08" required>
+            <option value="">Selecione</option>
+            <option>OK</option>
+            <option>Danificadas</option>
+            <option>Oxidadas</option>
+          </select>
+
+          <label for="item09">9. Cabo de força:</label>
+          <select id="item09" required>
+            <option value="">Selecione</option>
+            <option>OK</option>
+            <option>Danificado</option>
+            <option>Ausente</option>
+          </select>
+
+          <label for="item10">10. Fonte ATX / chave seletora:</label>
+          <select id="item10" required>
+            <option value="">Selecione</option>
+            <option>OK</option>
+            <option>Danificada</option>
+            <option>Lacre violado</option>
+          </select>
+
+          <label for="item11">11. Monitor e base:</label>
+          <select id="item11" required>
+            <option value="">Selecione</option>
+            <option>OK</option>
+            <option>Riscado</option>
+            <option>Quebrado</option>
+            <option>Manchado</option>
+          </select>
+
+          <label for="item12">12. Cabos de vídeo:</label>
+          <select id="item12" required>
+            <option value="">Selecione</option>
+            <option>OK</option>
+            <option>Danificados</option>
+            <option>Ausentes</option>
+          </select>
+
+          <label for="item13">13. Teclado:</label>
+          <select id="item13" required>
+            <option value="">Selecione</option>
+            <option>OK</option>
+            <option>Teclas faltando</option>
+            <option>Danificado</option>
+          </select>
+
+          <label for="item14">14. Mouse:</label>
+          <select id="item14" required>
+            <option value="">Selecione</option>
+            <option>OK</option>
+            <option>Danificado</option>
+            <option>Ausente</option>
+          </select>
+
+          <label for="item15">15. Unidade óptica / leitor:</label>
+          <select id="item15" required>
+            <option value="">Selecione</option>
+            <option>OK</option>
+            <option>Danificado</option>
+            <option>Não possui</option>
+          </select>
+
+          <label for="item16">16. Etiqueta / número de série:</label>
+          <select id="item16" required>
+            <option value="">Selecione</option>
+            <option>Legível</option>
+            <option>Ilegível</option>
+            <option>Não possui</option>
+          </select>
+
+          <label for="observacoesInspecao">Observações adicionais:</label>
+          <textarea id="observacoesInspecao" rows="4"></textarea>
+
+          <button type="submit" id="botaoSalvarInspecao">
+            Salvar inspeção
+          </button>
+          <button type="button" id="botaoCancelarInspecao" hidden>
+            Cancelar edição
+          </button>
+        </form>
+
+        <h3>Inspeções cadastradas</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Ordem de serviço</th>
+              <th>Equipamento</th>
+              <th>Data</th>
+              <th>Técnico</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="listaInspecoes"></tbody>
+        </table>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>
