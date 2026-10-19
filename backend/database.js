@@ -1,20 +1,17 @@
-// Importa a biblioteca responsável pelo banco de dados SQLite.
 const Database = require("better-sqlite3");
 const path = require("path");
 
-// Define o local onde o arquivo do banco de dados será criado.
+// Localização do arquivo do banco de dados.
 const caminhoBanco = path.join(__dirname, "assistencia.sqlite");
 
-// Cria ou abre o banco de dados.
+// Abre ou cria o banco de dados.
 const db = new Database(caminhoBanco);
 
-// Ativa a verificação dos relacionamentos entre as tabelas.
+// Ativa a verificação das chaves estrangeiras.
 db.pragma("foreign_keys = ON");
 
-// Cria as tabelas necessárias para o sistema.
+// Cria as tabelas do sistema caso ainda não existam.
 db.exec(`
-
-  -- Tabela de usuários que acessam o sistema.
   CREATE TABLE IF NOT EXISTS usuarios (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     nome TEXT NOT NULL,
@@ -24,7 +21,6 @@ db.exec(`
       CHECK (perfil IN ('administrador', 'tecnico'))
   );
 
-  -- Tabela de clientes da assistência técnica.
   CREATE TABLE IF NOT EXISTS clientes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     nome TEXT NOT NULL,
@@ -35,7 +31,6 @@ db.exec(`
     criado_em TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
 
-  -- Tabela de técnicos.
   CREATE TABLE IF NOT EXISTS tecnicos (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     nome TEXT NOT NULL,
@@ -44,7 +39,6 @@ db.exec(`
     identificacao_profissional TEXT
   );
 
-  -- Tabela de ordens de serviço.
   CREATE TABLE IF NOT EXISTS ordens_servico (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     numero_os TEXT NOT NULL UNIQUE,
@@ -76,7 +70,6 @@ db.exec(`
     FOREIGN KEY (tecnico_id) REFERENCES tecnicos(id)
   );
 
-  -- Tabela de inspeções físicas.
   CREATE TABLE IF NOT EXISTS inspecoes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     ordem_servico_id INTEGER NOT NULL UNIQUE,
@@ -100,6 +93,9 @@ db.exec(`
     item_15 TEXT,
     item_16 TEXT,
 
+    quantidade_parafusos INTEGER,
+    quantidade_pes INTEGER,
+
     observacoes TEXT,
 
     FOREIGN KEY (ordem_servico_id)
@@ -108,7 +104,6 @@ db.exec(`
       REFERENCES tecnicos(id)
   );
 
-  -- Tabela de testes funcionais e diagnóstico.
   CREATE TABLE IF NOT EXISTS testes_funcionais (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     ordem_servico_id INTEGER NOT NULL UNIQUE,
@@ -173,12 +168,36 @@ db.exec(`
     FOREIGN KEY (tecnico_id)
       REFERENCES tecnicos(id)
   );
-
 `);
 
-// Confirma que o banco foi aberto e as tabelas foram criadas.
+// ==================================================
+// ATUALIZAÇÃO SEGURA DA TABELA DE INSPEÇÕES
+// ==================================================
+
+// Consulta as colunas que já existem no banco.
+const colunasInspecoes = db.pragma("table_info(inspecoes)");
+const nomesColunas = colunasInspecoes.map((coluna) => coluna.name);
+
+// Adiciona a coluna de quantidade de parafusos, se necessário.
+if (!nomesColunas.includes("quantidade_parafusos")) {
+  db.exec(`
+    ALTER TABLE inspecoes
+    ADD COLUMN quantidade_parafusos INTEGER
+  `);
+}
+
+// Adiciona a coluna de quantidade de pés ou apoios, se necessário.
+if (!nomesColunas.includes("quantidade_pes")) {
+  db.exec(`
+    ALTER TABLE inspecoes
+    ADD COLUMN quantidade_pes INTEGER
+  `);
+}
+
+// Confirma a conexão e a estrutura do banco.
 console.log("Banco de dados conectado com sucesso!");
 console.log("Tabelas verificadas e criadas.");
+console.log("Colunas de quantidades da inspeção verificadas.");
 
-// Disponibiliza a conexão para os outros arquivos do projeto.
+// Disponibiliza a conexão para os outros arquivos.
 module.exports = db;

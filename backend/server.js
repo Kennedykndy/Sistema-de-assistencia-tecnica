@@ -1,14 +1,12 @@
-// Importa o Express para criar o servidor
+// ==================================================
+// IMPORTAÇÕES E CONFIGURAÇÃO DO SERVIDOR
+// ==================================================
+
 const express = require("express");
 const path = require("path");
-
-// Importa a conexão com o banco de dados SQLite
 const db = require("./database");
 
-// Cria a aplicação Express
 const app = express();
-
-// Define a porta do servidor
 const PORTA = 3000;
 
 // Permite receber dados no formato JSON
@@ -17,12 +15,58 @@ app.use(express.json());
 // Disponibiliza os arquivos do frontend
 app.use(express.static(path.join(__dirname, "../frontend")));
 
-// Rota inicial da API
+// ==================================================
+// ROTA INICIAL DA API
+// ==================================================
+
 app.get("/api", (req, res) => {
   res.json({
     mensagem: "API do sistema de assistência técnica funcionando!",
   });
 });
+
+// ==================================================
+// FUNÇÕES AUXILIARES
+// ==================================================
+
+// Executa uma operação dentro de uma transação SQLite.
+// Em caso de erro, desfaz as alterações.
+function executarTransacao(operacao) {
+  db.exec("BEGIN");
+
+  try {
+    const resultado = operacao();
+
+    db.exec("COMMIT");
+
+    return resultado;
+  } catch (erro) {
+    try {
+      db.exec("ROLLBACK");
+    } catch (erroRollback) {
+      console.error("Erro ao desfazer a transação:", erroRollback.message);
+    }
+
+    throw erro;
+  }
+}
+
+// Converte uma quantidade em inteiro positivo.
+// Retorna null quando o valor está vazio.
+// Retorna undefined quando o valor é inválido.
+function converterQuantidade(valor) {
+  if (valor === undefined || valor === null || valor === "") {
+    return null;
+  }
+
+  const quantidade = Number(valor);
+
+  if (!Number.isInteger(quantidade) || quantidade <= 0) {
+    return undefined;
+  }
+
+  return quantidade;
+}
 
 // ==================================================
 // CADASTRO DE CLIENTES
@@ -37,6 +81,8 @@ app.get("/api/clientes", (req, res) => {
 
     res.json(clientes);
   } catch (erro) {
+    console.error("Erro ao buscar clientes:", erro.message);
+
     res.status(500).json({
       erro: "Erro ao buscar clientes.",
     });
@@ -64,6 +110,8 @@ app.get("/api/clientes/:id", (req, res) => {
 
     res.json(cliente);
   } catch (erro) {
+    console.error("Erro ao buscar cliente:", erro.message);
+
     res.status(500).json({
       erro: "Erro ao buscar cliente.",
     });
@@ -72,7 +120,7 @@ app.get("/api/clientes/:id", (req, res) => {
 
 // Cadastra um cliente
 app.post("/api/clientes", (req, res) => {
-  const { nome, documento, telefone, email, endereco } = req.body;
+  const { nome, documento, telefone, email, endereco } = req.body || {};
 
   if (!nome || !String(nome).trim()) {
     return res.status(400).json({
@@ -84,10 +132,15 @@ app.post("/api/clientes", (req, res) => {
     const resultado = db
       .prepare(
         `
-        INSERT INTO clientes
-          (nome, documento, telefone, email, endereco)
+        INSERT INTO clientes (
+          nome,
+          documento,
+          telefone,
+          email,
+          endereco
+        )
         VALUES (?, ?, ?, ?, ?)
-      `,
+        `,
       )
       .run(
         String(nome).trim(),
@@ -102,6 +155,8 @@ app.post("/api/clientes", (req, res) => {
       id: resultado.lastInsertRowid,
     });
   } catch (erro) {
+    console.error("Erro ao cadastrar cliente:", erro.message);
+
     res.status(500).json({
       erro: "Erro ao cadastrar cliente.",
     });
@@ -111,7 +166,7 @@ app.post("/api/clientes", (req, res) => {
 // Atualiza um cliente
 app.put("/api/clientes/:id", (req, res) => {
   const id = Number(req.params.id);
-  const { nome, documento, telefone, email, endereco } = req.body;
+  const { nome, documento, telefone, email, endereco } = req.body || {};
 
   if (!Number.isInteger(id) || id <= 0) {
     return res.status(400).json({
@@ -143,7 +198,7 @@ app.put("/api/clientes/:id", (req, res) => {
           email = ?,
           endereco = ?
       WHERE id = ?
-    `,
+      `,
     ).run(
       String(nome).trim(),
       documento || null,
@@ -157,6 +212,8 @@ app.put("/api/clientes/:id", (req, res) => {
       mensagem: "Cliente atualizado com sucesso!",
     });
   } catch (erro) {
+    console.error("Erro ao atualizar cliente:", erro.message);
+
     res.status(500).json({
       erro: "Erro ao atualizar cliente.",
     });
@@ -186,6 +243,8 @@ app.delete("/api/clientes/:id", (req, res) => {
       mensagem: "Cliente excluído com sucesso!",
     });
   } catch (erro) {
+    console.error("Erro ao excluir cliente:", erro.message);
+
     if (erro.code === "SQLITE_CONSTRAINT_FOREIGNKEY") {
       return res.status(409).json({
         erro: "Não é possível excluir este cliente porque ele possui ordens de serviço vinculadas.",
@@ -211,6 +270,8 @@ app.get("/api/tecnicos", (req, res) => {
 
     res.json(tecnicos);
   } catch (erro) {
+    console.error("Erro ao buscar técnicos:", erro.message);
+
     res.status(500).json({
       erro: "Erro ao buscar técnicos.",
     });
@@ -238,6 +299,8 @@ app.get("/api/tecnicos/:id", (req, res) => {
 
     res.json(tecnico);
   } catch (erro) {
+    console.error("Erro ao buscar técnico:", erro.message);
+
     res.status(500).json({
       erro: "Erro ao buscar técnico.",
     });
@@ -246,7 +309,7 @@ app.get("/api/tecnicos/:id", (req, res) => {
 
 // Cadastra um técnico
 app.post("/api/tecnicos", (req, res) => {
-  const { nome, telefone, email, identificacao_profissional } = req.body;
+  const { nome, telefone, email, identificacao_profissional } = req.body || {};
 
   if (!nome || !String(nome).trim()) {
     return res.status(400).json({
@@ -258,10 +321,14 @@ app.post("/api/tecnicos", (req, res) => {
     const resultado = db
       .prepare(
         `
-        INSERT INTO tecnicos
-          (nome, telefone, email, identificacao_profissional)
+        INSERT INTO tecnicos (
+          nome,
+          telefone,
+          email,
+          identificacao_profissional
+        )
         VALUES (?, ?, ?, ?)
-      `,
+        `,
       )
       .run(
         String(nome).trim(),
@@ -275,6 +342,8 @@ app.post("/api/tecnicos", (req, res) => {
       id: resultado.lastInsertRowid,
     });
   } catch (erro) {
+    console.error("Erro ao cadastrar técnico:", erro.message);
+
     res.status(500).json({
       erro: "Erro ao cadastrar técnico.",
     });
@@ -284,7 +353,8 @@ app.post("/api/tecnicos", (req, res) => {
 // Atualiza um técnico
 app.put("/api/tecnicos/:id", (req, res) => {
   const id = Number(req.params.id);
-  const { nome, telefone, email, identificacao_profissional } = req.body;
+
+  const { nome, telefone, email, identificacao_profissional } = req.body || {};
 
   if (!Number.isInteger(id) || id <= 0) {
     return res.status(400).json({
@@ -315,7 +385,7 @@ app.put("/api/tecnicos/:id", (req, res) => {
           email = ?,
           identificacao_profissional = ?
       WHERE id = ?
-    `,
+      `,
     ).run(
       String(nome).trim(),
       telefone || null,
@@ -328,6 +398,8 @@ app.put("/api/tecnicos/:id", (req, res) => {
       mensagem: "Técnico atualizado com sucesso!",
     });
   } catch (erro) {
+    console.error("Erro ao atualizar técnico:", erro.message);
+
     res.status(500).json({
       erro: "Erro ao atualizar técnico.",
     });
@@ -357,6 +429,8 @@ app.delete("/api/tecnicos/:id", (req, res) => {
       mensagem: "Técnico excluído com sucesso!",
     });
   } catch (erro) {
+    console.error("Erro ao excluir técnico:", erro.message);
+
     if (erro.code === "SQLITE_CONSTRAINT_FOREIGNKEY") {
       return res.status(409).json({
         erro: "Não é possível excluir este técnico porque ele está vinculado a registros existentes.",
@@ -373,27 +447,41 @@ app.delete("/api/tecnicos/:id", (req, res) => {
 // ORDENS DE SERVIÇO
 // ==================================================
 
+const statusPermitidos = [
+  "Aberta",
+  "Em inspeção",
+  "Em diagnóstico",
+  "Aguardando reparo",
+  "Em reparo",
+  "Concluída",
+  "Entregue",
+  "Cancelada",
+];
+
 // Lista todas as ordens de serviço
 app.get("/api/ordens-servico", (req, res) => {
   try {
     const ordens = db
       .prepare(
         `
-      SELECT
-        os.*,
-        c.nome AS nome_cliente,
-        t.nome AS nome_tecnico
-      FROM ordens_servico os
-      INNER JOIN clientes c ON c.id = os.cliente_id
-      LEFT JOIN tecnicos t ON t.id = os.tecnico_id
-      ORDER BY os.id DESC
-    `,
+        SELECT
+          os.*,
+          c.nome AS nome_cliente,
+          t.nome AS nome_tecnico
+        FROM ordens_servico os
+        INNER JOIN clientes c
+          ON c.id = os.cliente_id
+        LEFT JOIN tecnicos t
+          ON t.id = os.tecnico_id
+        ORDER BY os.id DESC
+        `,
       )
       .all();
 
     res.json(ordens);
   } catch (erro) {
     console.error("Erro ao listar ordens:", erro.message);
+
     res.status(500).json({
       erro: "Erro ao listar ordens de serviço.",
     });
@@ -412,13 +500,7 @@ app.get("/api/ordens-servico/:id", (req, res) => {
 
   try {
     const ordem = db
-      .prepare(
-        `
-      SELECT *
-      FROM ordens_servico
-      WHERE id = ?
-    `,
-      )
+      .prepare("SELECT * FROM ordens_servico WHERE id = ?")
       .get(id);
 
     if (!ordem) {
@@ -430,6 +512,7 @@ app.get("/api/ordens-servico/:id", (req, res) => {
     res.json(ordem);
   } catch (erro) {
     console.error("Erro ao buscar ordem:", erro.message);
+
     res.status(500).json({
       erro: "Erro ao buscar ordem de serviço.",
     });
@@ -438,6 +521,8 @@ app.get("/api/ordens-servico/:id", (req, res) => {
 
 // Cadastra uma ordem de serviço
 app.post("/api/ordens-servico", (req, res) => {
+  const dados = req.body || {};
+
   const {
     cliente_id,
     tecnico_id,
@@ -450,9 +535,10 @@ app.post("/api/ordens-servico", (req, res) => {
     defeito_informado,
     status,
     recebido_por,
-  } = req.body;
+  } = dados;
 
   const clienteId = Number(cliente_id);
+
   const tecnicoId =
     tecnico_id === "" || tecnico_id === null || tecnico_id === undefined
       ? null
@@ -476,17 +562,6 @@ app.post("/api/ordens-servico", (req, res) => {
     });
   }
 
-  const statusPermitidos = [
-    "Aberta",
-    "Em inspeção",
-    "Em diagnóstico",
-    "Aguardando reparo",
-    "Em reparo",
-    "Concluída",
-    "Entregue",
-    "Cancelada",
-  ];
-
   const statusFinal = status || "Aberta";
 
   if (!statusPermitidos.includes(statusFinal)) {
@@ -496,51 +571,49 @@ app.post("/api/ordens-servico", (req, res) => {
   }
 
   try {
-    // Confere se o cliente existe
     const cliente = db
       .prepare("SELECT id FROM clientes WHERE id = ?")
       .get(clienteId);
 
     if (!cliente) {
-      return res.status(400).json({
+      return res.status(404).json({
         erro: "O cliente selecionado não existe.",
       });
     }
 
-    // Confere se o técnico existe, quando informado
     if (tecnicoId !== null) {
       const tecnico = db
         .prepare("SELECT id FROM tecnicos WHERE id = ?")
         .get(tecnicoId);
 
       if (!tecnico) {
-        return res.status(400).json({
+        return res.status(404).json({
           erro: "O técnico selecionado não existe.",
         });
       }
     }
 
-    // Gera um número único para a ordem de serviço
     const numeroOS = `OS-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
     const resultado = db
       .prepare(
         `
-      INSERT INTO ordens_servico (
-        numero_os,
-        cliente_id,
-        tecnico_id,
-        data_abertura,
-        equipamento,
-        marca,
-        modelo,
-        numero_serie,
-        acessorios_recebidos,
-        defeito_informado,
-        status,
-        recebido_por
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `,
+        INSERT INTO ordens_servico (
+          numero_os,
+          cliente_id,
+          tecnico_id,
+          data_abertura,
+          equipamento,
+          marca,
+          modelo,
+          numero_serie,
+          acessorios_recebidos,
+          defeito_informado,
+          status,
+          recebido_por
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `,
       )
       .run(
         numeroOS,
@@ -564,6 +637,7 @@ app.post("/api/ordens-servico", (req, res) => {
     });
   } catch (erro) {
     console.error("Erro ao cadastrar ordem:", erro.message);
+
     res.status(500).json({
       erro: "Erro ao cadastrar ordem de serviço.",
     });
@@ -573,6 +647,7 @@ app.post("/api/ordens-servico", (req, res) => {
 // Atualiza uma ordem de serviço
 app.put("/api/ordens-servico/:id", (req, res) => {
   const id = Number(req.params.id);
+  const dados = req.body || {};
 
   const {
     cliente_id,
@@ -586,7 +661,7 @@ app.put("/api/ordens-servico/:id", (req, res) => {
     defeito_informado,
     status,
     recebido_por,
-  } = req.body;
+  } = dados;
 
   if (!Number.isInteger(id) || id <= 0) {
     return res.status(400).json({
@@ -595,6 +670,7 @@ app.put("/api/ordens-servico/:id", (req, res) => {
   }
 
   const clienteId = Number(cliente_id);
+
   const tecnicoId =
     tecnico_id === "" || tecnico_id === null || tecnico_id === undefined
       ? null
@@ -618,17 +694,6 @@ app.put("/api/ordens-servico/:id", (req, res) => {
     });
   }
 
-  const statusPermitidos = [
-    "Aberta",
-    "Em inspeção",
-    "Em diagnóstico",
-    "Aguardando reparo",
-    "Em reparo",
-    "Concluída",
-    "Entregue",
-    "Cancelada",
-  ];
-
   if (!statusPermitidos.includes(status)) {
     return res.status(400).json({
       erro: "Selecione um status válido.",
@@ -651,7 +716,7 @@ app.put("/api/ordens-servico/:id", (req, res) => {
       .get(clienteId);
 
     if (!cliente) {
-      return res.status(400).json({
+      return res.status(404).json({
         erro: "O cliente selecionado não existe.",
       });
     }
@@ -662,7 +727,7 @@ app.put("/api/ordens-servico/:id", (req, res) => {
         .get(tecnicoId);
 
       if (!tecnico) {
-        return res.status(400).json({
+        return res.status(404).json({
           erro: "O técnico selecionado não existe.",
         });
       }
@@ -683,7 +748,7 @@ app.put("/api/ordens-servico/:id", (req, res) => {
           status = ?,
           recebido_por = ?
       WHERE id = ?
-    `,
+      `,
     ).run(
       clienteId,
       tecnicoId,
@@ -704,6 +769,7 @@ app.put("/api/ordens-servico/:id", (req, res) => {
     });
   } catch (erro) {
     console.error("Erro ao atualizar ordem:", erro.message);
+
     res.status(500).json({
       erro: "Erro ao atualizar ordem de serviço.",
     });
@@ -750,10 +816,6 @@ app.delete("/api/ordens-servico/:id", (req, res) => {
 });
 
 // ==================================================
-// DASHBOARD
-// ==================================================
-
-// ==================================================
 // INSPEÇÃO FÍSICA DO EQUIPAMENTO
 // ==================================================
 
@@ -777,22 +839,59 @@ const opcoesInspecao = {
   item_16: ["Legível", "Ilegível", "Não possui"],
 };
 
-// Nomes das colunas dos 16 itens
 const camposInspecao = Object.keys(opcoesInspecao);
 
-// Valida os dados enviados para a inspeção
+// Valida os 16 itens e as quantidades
 function validarInspecao(dados) {
+  if (!dados || typeof dados !== "object" || Array.isArray(dados)) {
+    return {
+      erro: "Envie os dados da inspeção em formato válido.",
+    };
+  }
+
+  // Todos os 16 itens devem estar preenchidos
   for (const campo of camposInspecao) {
     const valor = dados[campo];
 
-    // Permite deixar um item sem preenchimento durante o cadastro
     if (valor === undefined || valor === null || valor === "") {
-      continue;
+      return {
+        erro: `O campo ${campo} é obrigatório.`,
+      };
     }
 
-    if (!opcoesInspecao[campo].includes(valor)) {
-      return `Opção inválida para o campo ${campo}.`;
+    if (typeof valor !== "string" || !opcoesInspecao[campo].includes(valor)) {
+      return {
+        erro: `Opção inválida para o campo ${campo}.`,
+      };
     }
+  }
+
+  const quantidadeParafusos = converterQuantidade(dados.quantidade_parafusos);
+
+  if (dados.item_03 === "Faltam") {
+    if (quantidadeParafusos === null || quantidadeParafusos === undefined) {
+      return {
+        erro: "Informe uma quantidade inteira e positiva de parafusos faltantes.",
+      };
+    }
+  } else if (quantidadeParafusos === undefined) {
+    return {
+      erro: "A quantidade de parafusos deve ser um número inteiro positivo.",
+    };
+  }
+
+  const quantidadePes = converterQuantidade(dados.quantidade_pes);
+
+  if (dados.item_04 === "Faltam") {
+    if (quantidadePes === null || quantidadePes === undefined) {
+      return {
+        erro: "Informe uma quantidade inteira e positiva de pés ou apoios faltantes.",
+      };
+    }
+  } else if (quantidadePes === undefined) {
+    return {
+      erro: "A quantidade de pés ou apoios deve ser um número inteiro positivo.",
+    };
   }
 
   if (
@@ -800,10 +899,73 @@ function validarInspecao(dados) {
     dados.observacoes !== null &&
     typeof dados.observacoes !== "string"
   ) {
-    return "O campo observações deve ser um texto.";
+    return {
+      erro: "O campo observações deve ser um texto.",
+    };
   }
 
-  return null;
+  if (
+    dados.data_inspecao !== undefined &&
+    dados.data_inspecao !== null &&
+    dados.data_inspecao !== ""
+  ) {
+    if (
+      typeof dados.data_inspecao !== "string" ||
+      !/^\d{4}-\d{2}-\d{2}$/.test(dados.data_inspecao)
+    ) {
+      return {
+        erro: "Informe uma data de inspeção válida no formato AAAA-MM-DD.",
+      };
+    }
+
+    const data = new Date(`${dados.data_inspecao}T00:00:00`);
+
+    if (
+      Number.isNaN(data.getTime()) ||
+      data.toISOString().slice(0, 10) !== dados.data_inspecao
+    ) {
+      return {
+        erro: "A data de inspeção informada não existe.",
+      };
+    }
+  }
+
+  return {
+    erro: null,
+    quantidadeParafusos:
+      dados.item_03 === "Faltam" ? quantidadeParafusos : null,
+    quantidadePes: dados.item_04 === "Faltam" ? quantidadePes : null,
+  };
+}
+
+// Valida os identificadores da OS e do técnico
+function validarVinculosInspecao(dados) {
+  if (!dados || typeof dados !== "object" || Array.isArray(dados)) {
+    return {
+      erro: "Envie os dados da inspeção em formato válido.",
+    };
+  }
+
+  const ordemServicoId = Number(dados.ordem_servico_id);
+  const tecnicoId = Number(dados.tecnico_id);
+
+  if (!Number.isInteger(ordemServicoId) || ordemServicoId <= 0) {
+    return {
+      erro: "Selecione uma Ordem de Serviço válida.",
+    };
+  }
+
+  if (!Number.isInteger(tecnicoId) || tecnicoId <= 0) {
+    return {
+      erro: "Selecione um técnico responsável válido.",
+    };
+  }
+
+  return {
+    erro: null,
+    ordemServicoId,
+    tecnicoId,
+  };
 }
 
 // Lista todas as inspeções físicas
@@ -820,10 +982,10 @@ app.get("/api/inspecoes", (req, res) => {
         FROM inspecoes i
         INNER JOIN ordens_servico os
           ON os.id = i.ordem_servico_id
-        LEFT JOIN tecnicos t
+        INNER JOIN tecnicos t
           ON t.id = i.tecnico_id
         ORDER BY i.id DESC
-      `,
+        `,
       )
       .all();
 
@@ -859,10 +1021,10 @@ app.get("/api/inspecoes/:id", (req, res) => {
         FROM inspecoes i
         INNER JOIN ordens_servico os
           ON os.id = i.ordem_servico_id
-        LEFT JOIN tecnicos t
+        INNER JOIN tecnicos t
           ON t.id = i.tecnico_id
         WHERE i.id = ?
-      `,
+        `,
       )
       .get(id);
 
@@ -884,68 +1046,54 @@ app.get("/api/inspecoes/:id", (req, res) => {
 
 // Cadastra uma inspeção física
 app.post("/api/inspecoes", (req, res) => {
-  const dados = req.body;
+  const dados = req.body || {};
 
-  const ordemServicoId = Number(dados.ordem_servico_id);
+  const vinculos = validarVinculosInspecao(dados);
 
-  const tecnicoId =
-    dados.tecnico_id === "" ||
-    dados.tecnico_id === null ||
-    dados.tecnico_id === undefined
-      ? null
-      : Number(dados.tecnico_id);
-
-  if (!Number.isInteger(ordemServicoId) || ordemServicoId <= 0) {
+  if (vinculos.erro) {
     return res.status(400).json({
-      erro: "Selecione uma Ordem de Serviço válida.",
+      erro: vinculos.erro,
     });
   }
 
-  if (tecnicoId !== null && (!Number.isInteger(tecnicoId) || tecnicoId <= 0)) {
+  const validacao = validarInspecao(dados);
+
+  if (validacao.erro) {
     return res.status(400).json({
-      erro: "Selecione um técnico válido.",
+      erro: validacao.erro,
     });
   }
 
-  const erroValidacao = validarInspecao(dados);
-
-  if (erroValidacao) {
-    return res.status(400).json({
-      erro: erroValidacao,
-    });
-  }
+  const { ordemServicoId, tecnicoId } = vinculos;
 
   try {
-    // Confere se a Ordem de Serviço existe
     const ordem = db
       .prepare("SELECT id FROM ordens_servico WHERE id = ?")
       .get(ordemServicoId);
 
     if (!ordem) {
-      return res.status(400).json({
+      return res.status(404).json({
         erro: "A Ordem de Serviço informada não existe.",
       });
     }
 
-    // Confere se o técnico existe, caso tenha sido informado
-    if (tecnicoId !== null) {
-      const tecnico = db
-        .prepare("SELECT id FROM tecnicos WHERE id = ?")
-        .get(tecnicoId);
+    const tecnico = db
+      .prepare("SELECT id FROM tecnicos WHERE id = ?")
+      .get(tecnicoId);
 
-      if (!tecnico) {
-        return res.status(400).json({
-          erro: "O técnico informado não existe.",
-        });
-      }
+    if (!tecnico) {
+      return res.status(404).json({
+        erro: "O técnico informado não existe.",
+      });
     }
 
-    // Monta os campos e valores do cadastro
     const colunas = [
       "ordem_servico_id",
       "tecnico_id",
       "data_inspecao",
       ...camposInspecao,
+      "quantidade_parafusos",
+      "quantidade_pes",
       "observacoes",
     ];
 
@@ -953,8 +1101,10 @@ app.post("/api/inspecoes", (req, res) => {
       ordemServicoId,
       tecnicoId,
       dados.data_inspecao || new Date().toISOString().slice(0, 10),
-      ...camposInspecao.map((campo) => dados[campo] || null),
-      dados.observacoes || null,
+      ...camposInspecao.map((campo) => dados[campo]),
+      validacao.quantidadeParafusos,
+      validacao.quantidadePes,
+      dados.observacoes?.trim() || null,
     ];
 
     const sql = `
@@ -962,7 +1112,10 @@ app.post("/api/inspecoes", (req, res) => {
       VALUES (${colunas.map(() => "?").join(", ")})
     `;
 
-    const resultado = db.prepare(sql).run(...valores);
+    // A inserção será confirmada somente se a operação terminar sem erro
+    const resultado = executarTransacao(() => {
+      return db.prepare(sql).run(...valores);
+    });
 
     res.status(201).json({
       mensagem: "Inspeção física cadastrada com sucesso!",
@@ -971,7 +1124,6 @@ app.post("/api/inspecoes", (req, res) => {
   } catch (erro) {
     console.error("Erro ao cadastrar inspeção:", erro.message);
 
-    // Uma OS só pode ter uma inspeção, conforme a estrutura atual do banco
     if (erro.code === "SQLITE_CONSTRAINT_UNIQUE") {
       return res.status(409).json({
         erro: "Esta Ordem de Serviço já possui uma inspeção física cadastrada.",
@@ -979,13 +1131,13 @@ app.post("/api/inspecoes", (req, res) => {
     }
 
     if (erro.code === "SQLITE_CONSTRAINT_FOREIGNKEY") {
-      return res.status(400).json({
-        erro: "A Ordem de Serviço ou o técnico informado não existe.",
+      return res.status(409).json({
+        erro: "Não foi possível vincular a inspeção à OS ou ao técnico informado.",
       });
     }
 
     res.status(500).json({
-      erro: "Erro ao cadastrar a inspeção física.",
+      erro: "Erro ao cadastrar a inspeção física. A operação foi desfeita se ocorreu uma falha durante a gravação.",
     });
   }
 });
@@ -993,7 +1145,7 @@ app.post("/api/inspecoes", (req, res) => {
 // Atualiza uma inspeção física
 app.put("/api/inspecoes/:id", (req, res) => {
   const id = Number(req.params.id);
-  const dados = req.body;
+  const dados = req.body || {};
 
   if (!Number.isInteger(id) || id <= 0) {
     return res.status(400).json({
@@ -1001,34 +1153,23 @@ app.put("/api/inspecoes/:id", (req, res) => {
     });
   }
 
-  const ordemServicoId = Number(dados.ordem_servico_id);
+  const vinculos = validarVinculosInspecao(dados);
 
-  const tecnicoId =
-    dados.tecnico_id === "" ||
-    dados.tecnico_id === null ||
-    dados.tecnico_id === undefined
-      ? null
-      : Number(dados.tecnico_id);
-
-  if (!Number.isInteger(ordemServicoId) || ordemServicoId <= 0) {
+  if (vinculos.erro) {
     return res.status(400).json({
-      erro: "Selecione uma Ordem de Serviço válida.",
+      erro: vinculos.erro,
     });
   }
 
-  if (tecnicoId !== null && (!Number.isInteger(tecnicoId) || tecnicoId <= 0)) {
+  const validacao = validarInspecao(dados);
+
+  if (validacao.erro) {
     return res.status(400).json({
-      erro: "Selecione um técnico válido.",
+      erro: validacao.erro,
     });
   }
 
-  const erroValidacao = validarInspecao(dados);
-
-  if (erroValidacao) {
-    return res.status(400).json({
-      erro: erroValidacao,
-    });
-  }
+  const { ordemServicoId, tecnicoId } = vinculos;
 
   try {
     const inspecao = db
@@ -1046,21 +1187,19 @@ app.put("/api/inspecoes/:id", (req, res) => {
       .get(ordemServicoId);
 
     if (!ordem) {
-      return res.status(400).json({
+      return res.status(404).json({
         erro: "A Ordem de Serviço informada não existe.",
       });
     }
 
-    if (tecnicoId !== null) {
-      const tecnico = db
-        .prepare("SELECT id FROM tecnicos WHERE id = ?")
-        .get(tecnicoId);
+    const tecnico = db
+      .prepare("SELECT id FROM tecnicos WHERE id = ?")
+      .get(tecnicoId);
 
-      if (!tecnico) {
-        return res.status(400).json({
-          erro: "O técnico informado não existe.",
-        });
-      }
+    if (!tecnico) {
+      return res.status(404).json({
+        erro: "O técnico informado não existe.",
+      });
     }
 
     const camposAtualizacao = [
@@ -1068,6 +1207,8 @@ app.put("/api/inspecoes/:id", (req, res) => {
       "tecnico_id",
       "data_inspecao",
       ...camposInspecao,
+      "quantidade_parafusos",
+      "quantidade_pes",
       "observacoes",
     ];
 
@@ -1075,8 +1216,10 @@ app.put("/api/inspecoes/:id", (req, res) => {
       ordemServicoId,
       tecnicoId,
       dados.data_inspecao || new Date().toISOString().slice(0, 10),
-      ...camposInspecao.map((campo) => dados[campo] || null),
-      dados.observacoes || null,
+      ...camposInspecao.map((campo) => dados[campo]),
+      validacao.quantidadeParafusos,
+      validacao.quantidadePes,
+      dados.observacoes?.trim() || null,
       id,
     ];
 
@@ -1084,13 +1227,17 @@ app.put("/api/inspecoes/:id", (req, res) => {
       .map((campo) => `${campo} = ?`)
       .join(", ");
 
-    db.prepare(
-      `
-      UPDATE inspecoes
-      SET ${atribuicoes}
-      WHERE id = ?
-    `,
-    ).run(...valores);
+    executarTransacao(() => {
+      return db
+        .prepare(
+          `
+          UPDATE inspecoes
+          SET ${atribuicoes}
+          WHERE id = ?
+          `,
+        )
+        .run(...valores);
+    });
 
     res.json({
       mensagem: "Inspeção física atualizada com sucesso!",
@@ -1104,8 +1251,14 @@ app.put("/api/inspecoes/:id", (req, res) => {
       });
     }
 
+    if (erro.code === "SQLITE_CONSTRAINT_FOREIGNKEY") {
+      return res.status(409).json({
+        erro: "Não foi possível vincular a inspeção à OS ou ao técnico informado.",
+      });
+    }
+
     res.status(500).json({
-      erro: "Erro ao atualizar a inspeção física.",
+      erro: "Erro ao atualizar a inspeção física. As alterações foram desfeitas se ocorreu uma falha durante a gravação.",
     });
   }
 });
@@ -1135,11 +1288,21 @@ app.delete("/api/inspecoes/:id", (req, res) => {
   } catch (erro) {
     console.error("Erro ao excluir inspeção:", erro.message);
 
+    if (erro.code === "SQLITE_CONSTRAINT_FOREIGNKEY") {
+      return res.status(409).json({
+        erro: "Não é possível excluir esta inspeção porque existem registros vinculados.",
+      });
+    }
+
     res.status(500).json({
       erro: "Erro ao excluir a inspeção física.",
     });
   }
 });
+
+// ==================================================
+// DASHBOARD
+// ==================================================
 
 app.get("/api/dashboard", (req, res) => {
   try {
@@ -1161,7 +1324,7 @@ app.get("/api/dashboard", (req, res) => {
         SELECT status, COUNT(*) AS total
         FROM ordens_servico
         GROUP BY status
-      `,
+        `,
       )
       .all();
 
@@ -1172,13 +1335,18 @@ app.get("/api/dashboard", (req, res) => {
       ordensPorStatus,
     });
   } catch (erro) {
+    console.error("Erro ao carregar dashboard:", erro.message);
+
     res.status(500).json({
       erro: "Erro ao carregar o dashboard.",
     });
   }
 });
 
-// Inicia o servidor
+// ==================================================
+// INICIA O SERVIDOR
+// ==================================================
+
 app.listen(PORTA, () => {
   console.log(`Servidor rodando em http://localhost:${PORTA}`);
 });

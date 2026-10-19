@@ -11,7 +11,6 @@ async function requisicao(url, opcoes = {}) {
     },
   });
 
-  // Trata respostas que não sejam JSON
   let dados;
 
   try {
@@ -138,6 +137,7 @@ formCliente.addEventListener("submit", async (evento) => {
     await carregarClientes();
     await carregarDashboard();
     await carregarOpcoesOS();
+    await carregarOpcoesInspecao();
   } catch (erro) {
     alert(erro.message);
   }
@@ -175,6 +175,7 @@ async function excluirCliente(id) {
     await carregarClientes();
     await carregarDashboard();
     await carregarOpcoesOS();
+    await carregarOpcoesInspecao();
   } catch (erro) {
     alert(erro.message);
   }
@@ -273,6 +274,7 @@ formTecnico.addEventListener("submit", async (evento) => {
     await carregarTecnicos();
     await carregarDashboard();
     await carregarOpcoesOS();
+    await carregarOpcoesInspecao();
   } catch (erro) {
     alert(erro.message);
   }
@@ -310,6 +312,7 @@ async function excluirTecnico(id) {
     await carregarTecnicos();
     await carregarDashboard();
     await carregarOpcoesOS();
+    await carregarOpcoesInspecao();
   } catch (erro) {
     alert(erro.message);
   }
@@ -524,12 +527,44 @@ document.getElementById("botaoCancelarOS").addEventListener("click", () => {
 // INSPEÇÃO FÍSICA
 // ==================================================
 
-// Lista os nomes dos campos dos 16 itens
 const camposInspecao = Array.from({ length: 16 }, (_, indice) => {
   return `item_${String(indice + 1).padStart(2, "0")}`;
 });
 
 const formInspecao = document.getElementById("formInspecao");
+
+const campoItem03 = document.getElementById("item03");
+const campoItem04 = document.getElementById("item04");
+
+const campoQuantidadeParafusos = document.getElementById(
+  "quantidade_parafusos",
+);
+
+const campoQuantidadePes = document.getElementById("quantidade_pes");
+
+// Ativa a quantidade somente quando o item correspondente estiver faltando
+function atualizarObrigatoriedadeQuantidades() {
+  const faltamParafusos = campoItem03.value === "Faltam";
+
+  campoQuantidadeParafusos.required = faltamParafusos;
+  campoQuantidadeParafusos.disabled = !faltamParafusos;
+
+  if (!faltamParafusos) {
+    campoQuantidadeParafusos.value = "";
+  }
+
+  const faltamPes = campoItem04.value === "Faltam";
+
+  campoQuantidadePes.required = faltamPes;
+  campoQuantidadePes.disabled = !faltamPes;
+
+  if (!faltamPes) {
+    campoQuantidadePes.value = "";
+  }
+}
+
+campoItem03.addEventListener("change", atualizarObrigatoriedadeQuantidades);
+campoItem04.addEventListener("change", atualizarObrigatoriedadeQuantidades);
 
 // Carrega as OS e os técnicos nos campos da inspeção
 async function carregarOpcoesInspecao() {
@@ -549,11 +584,10 @@ async function carregarOpcoesInspecao() {
     campoTecnico.replaceChildren();
 
     campoOS.add(new Option("Selecione uma OS", ""));
-    campoTecnico.add(new Option("Sem técnico definido", ""));
+    campoTecnico.add(new Option("Selecione um técnico", ""));
 
     ordens.forEach((ordem) => {
       const descricao = `${ordem.numero_os} - ${ordem.equipamento} - ${ordem.nome_cliente}`;
-
       campoOS.add(new Option(descricao, String(ordem.id)));
     });
 
@@ -584,6 +618,8 @@ function limparFormularioInspecao() {
     "Cadastrar inspeção";
 
   document.getElementById("botaoCancelarInspecao").hidden = true;
+
+  atualizarObrigatoriedadeQuantidades();
 }
 
 // Lista as inspeções cadastradas
@@ -627,23 +663,85 @@ async function carregarInspecoes() {
   }
 }
 
+// Confere se a quantidade informada é um inteiro positivo
+function quantidadeValida(valor) {
+  const quantidade = Number(valor);
+
+  return Number.isInteger(quantidade) && quantidade > 0;
+}
+
 // Cadastra ou atualiza uma inspeção
 formInspecao.addEventListener("submit", async (evento) => {
   evento.preventDefault();
 
   const id = document.getElementById("inspecaoId").value;
 
+  // Verifica se os 16 itens foram preenchidos
+  for (const campo of camposInspecao) {
+    const idHTML = campo.replace("_", "");
+    const elemento = document.getElementById(idHTML);
+
+    if (!elemento || !elemento.value) {
+      alert(`Preencha o item ${campo.replace("item_", "")} da inspeção.`);
+      elemento?.focus();
+      return;
+    }
+  }
+
+  // Se faltam parafusos, exige a quantidade
+  if (
+    campoItem03.value === "Faltam" &&
+    !quantidadeValida(campoQuantidadeParafusos.value)
+  ) {
+    alert(
+      "Informe uma quantidade inteira maior que zero para os parafusos faltantes.",
+    );
+    campoQuantidadeParafusos.focus();
+    return;
+  }
+
+  // Se faltam pés ou apoios, exige a quantidade
+  if (
+    campoItem04.value === "Faltam" &&
+    !quantidadeValida(campoQuantidadePes.value)
+  ) {
+    alert(
+      "Informe uma quantidade inteira maior que zero para os pés ou apoios faltantes.",
+    );
+    campoQuantidadePes.focus();
+    return;
+  }
+
   const inspecao = {
     ordem_servico_id: document.getElementById("ordemInspecao").value,
-    tecnico_id: document.getElementById("tecnicoInspecao").value || null,
+    tecnico_id: document.getElementById("tecnicoInspecao").value,
     data_inspecao: document.getElementById("dataInspecao").value,
     observacoes: document.getElementById("observacoesInspecao").value.trim(),
+    quantidade_parafusos:
+      campoItem03.value === "Faltam"
+        ? Number(campoQuantidadeParafusos.value)
+        : null,
+    quantidade_pes:
+      campoItem04.value === "Faltam" ? Number(campoQuantidadePes.value) : null,
   };
 
-  // Adiciona ao objeto os 16 itens da inspeção
+  // Converte os IDs HTML item01...item16 para item_01...item_16 da API
   camposInspecao.forEach((campo) => {
-    inspecao[campo] = document.getElementById(campo).value || null;
+    const idHTML = campo.replace("_", "");
+    inspecao[campo] = document.getElementById(idHTML).value;
   });
+
+  if (!inspecao.ordem_servico_id) {
+    alert("Selecione uma Ordem de Serviço.");
+    document.getElementById("ordemInspecao").focus();
+    return;
+  }
+
+  if (!inspecao.tecnico_id) {
+    alert("Selecione o técnico responsável pela inspeção.");
+    document.getElementById("tecnicoInspecao").focus();
+    return;
+  }
 
   try {
     await requisicao(id ? `/api/inspecoes/${id}` : "/api/inspecoes", {
@@ -671,10 +769,10 @@ async function editarInspecao(id) {
   try {
     const inspecao = await requisicao(`/api/inspecoes/${id}`);
 
-    // Atualiza as opções antes de selecionar a OS e o técnico
     await carregarOpcoesInspecao();
 
     document.getElementById("inspecaoId").value = inspecao.id;
+
     document.getElementById("ordemInspecao").value = String(
       inspecao.ordem_servico_id,
     );
@@ -684,15 +782,22 @@ async function editarInspecao(id) {
       : "";
 
     document.getElementById("dataInspecao").value =
-      inspecao.data_inspecao ?? "";
+      inspecao.data_inspecao?.slice(0, 10) ?? "";
 
     document.getElementById("observacoesInspecao").value =
       inspecao.observacoes ?? "";
 
-    // Preenche os 16 itens com os valores salvos
+    // Preenche os 16 itens usando os IDs corretos do HTML
     camposInspecao.forEach((campo) => {
-      document.getElementById(campo).value = inspecao[campo] ?? "";
+      const idHTML = campo.replace("_", "");
+      document.getElementById(idHTML).value = inspecao[campo] ?? "";
     });
+
+    // Recupera as quantidades salvas no banco
+    campoQuantidadeParafusos.value = inspecao.quantidade_parafusos ?? "";
+    campoQuantidadePes.value = inspecao.quantidade_pes ?? "";
+
+    atualizarObrigatoriedadeQuantidades();
 
     document.getElementById("botaoSalvarInspecao").textContent =
       "Salvar alterações";
@@ -754,6 +859,8 @@ async function carregarDashboard() {
 async function iniciarSistema() {
   document.getElementById("dataAberturaOS").value = dataLocalISO();
   document.getElementById("dataInspecao").value = dataLocalISO();
+
+  atualizarObrigatoriedadeQuantidades();
 
   await Promise.all([
     carregarClientes(),
